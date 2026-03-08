@@ -32,7 +32,42 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
+
+        <!-- Lombok：减少样板代码（Getter/Setter/Builder 等），编译期生效 -->
+         <dependency>
+             <groupId>org.projectlombok</groupId>
+             <artifactId>lombok</artifactId>
+             <version>1.18.30</version>
+             <scope>provided</scope>
+         </dependency>
+
+
+        <!-- 1. MyBatis Spring Boot Starter -->
+        <dependency>
+            <groupId>org.mybatis.spring.boot</groupId>
+            <artifactId>mybatis-spring-boot-starter</artifactId>
+            <version>3.0.3</version> <!-- 请根据实际 Spring Boot 版本选择兼容版本 -->
+        </dependency>
+
+        <!-- 2. Druid Spring Boot Starter (阿里官方提供) -->
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>druid-spring-boot-starter</artifactId>
+            <version>1.2.20</version> <!-- 建议使用最新稳定版 -->
+        </dependency>
+
+        <!-- MySQL 驱动：连接 MySQL 数据库 -->
+        <dependency>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
+            <version>9.5.0</version>
+        </dependency>
+
     </dependencies>
+
+
+
+
 
     <build>
         <plugins>
