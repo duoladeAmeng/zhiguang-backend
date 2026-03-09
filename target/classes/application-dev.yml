@@ -45,5 +45,8 @@ spring:
         enabled: true
         url-pattern: /*           # 拦截所有请求
         exclusions: "*.js,*.gif,*.jpg,*.png,*.css,*.ico,/druid/*" # 排除静态资源和监控页本身
+  ai:
+    zhipuai:
+      api-key: 256b1fde5db742d4b2a5c19694fea3bf.Kiz7OM99lUC0UdP1
 mybatis:
   mapper-locations: classpath:mapper/*.xml
