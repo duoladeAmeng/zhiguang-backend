@@ -48,9 +48,5 @@ spring:
   ai:
     zhipuai:
       api-key: 256b1fde5db742d4b2a5c19694fea3bf.Kiz7OM99lUC0UdP1
-  data:
-    redis:
-      host: 172.24.233.37
-      port: 6379
 mybatis:
   mapper-locations: classpath:mapper/*.xml
