@@ -4,6 +4,7 @@ import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
@@ -40,9 +41,9 @@ public class AuthProperties {
         /** JWK 密钥标识（kid），用于下游校验与轮换。 */
         private String keyId = "zhiguang-key";
         /** RSA 私钥 PEM（PKCS#8）资源。 */
-        private Resource privateKey;
+        private Resource privateKey=new ClassPathResource("keys/private.pem");
         /** RSA 公钥 PEM（X.509）资源。 */
-        private Resource publicKey;
+        private Resource publicKey=new ClassPathResource("keys/public.pem");
     }
 
     /**

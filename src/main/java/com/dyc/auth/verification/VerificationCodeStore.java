@@ -30,7 +30,6 @@ public interface VerificationCodeStore {
      * @return 校验结果，包含状态与尝试次数统计。
      */
     VerificationCheckResult verify(String scene, String identifier, String code);
-
     /**
      * 使验证码失效（删除存储记录）。
      *

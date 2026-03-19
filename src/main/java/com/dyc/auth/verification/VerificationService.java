@@ -5,6 +5,7 @@ import com.dyc.common.exception.BusinessException;
 import com.dyc.common.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -72,11 +73,19 @@ public class VerificationService{
             return;
         }
         String key = "auth:code:last:" + scene.name() + ":" + identifier;
-        String existing = stringRedisTemplate.opsForValue().get(key);
-        if (existing != null) {
+//        String existing = stringRedisTemplate.opsForValue().get(key);
+//
+//        if (existing != null) {
+//            throw new BusinessException(ErrorCode.VERIFICATION_RATE_LIMIT);
+//        }
+//        stringRedisTemplate.opsForValue().set(key, "1", interval);
+
+        Boolean isAbsent = stringRedisTemplate.opsForValue().setIfAbsent(key, "1", interval);
+        if (Boolean.FALSE.equals(isAbsent)) {
+            // 如果设置失败，说明 Key 已经存在，触发限流
             throw new BusinessException(ErrorCode.VERIFICATION_RATE_LIMIT);
         }
-        stringRedisTemplate.opsForValue().set(key, "1", interval);
+
     }
 
     /**
@@ -102,8 +111,6 @@ public class VerificationService{
     }
 
 
-
-
     /**
      * 生成指定长度的纯数字验证码。
      *
@@ -116,6 +123,24 @@ public class VerificationService{
             builder.append(RANDOM.nextInt(10));
         }
         return builder.toString();
+    }
+
+
+
+    /**
+     * 校验验证码是否正确且未超限。
+     *
+     * @param scene      验证码场景。
+     * @param identifier 标识（手机号或邮箱）。
+     * @param code       用户输入的验证码。
+     * @return 校验结果，包含状态与尝试次数统计。
+     * @throws BusinessException 参数不完整时抛出。
+     */
+    public VerificationCheckResult verify(VerificationScene scene, String identifier, String code) {
+        if (scene == null || !StringUtils.hasText(identifier) || !StringUtils.hasText(code)) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "验证码校验参数不完整");
+        }
+        return codeStore.verify(scene.name(), identifier, code);
     }
 
 

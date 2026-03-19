@@ -1,8 +1,11 @@
 package com.dyc.auth.api;
 
 import com.dyc.auth.config.AuthProperties;
+import com.dyc.auth.dto.AuthResponse;
+import com.dyc.auth.dto.RegisterRequest;
 import com.dyc.auth.dto.SendCodeRequest;
 import com.dyc.auth.dto.SendCodeResponse;
+import com.dyc.auth.model.ClientInfo;
 import com.dyc.auth.service.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -48,5 +51,54 @@ public class AuthController {
     public AuthResponse register(@Valid @RequestBody RegisterRequest request, HttpServletRequest httpRequest) {
         return authService.register(request, resolveClient(httpRequest));
     }
+
+    /**
+     * 从请求中解析客户端信息。
+     *
+     * @param request HTTP 请求对象。
+     * @return 客户端信息（IP 与 User-Agent）。
+     */
+    private ClientInfo resolveClient(HttpServletRequest request) {
+        String ip = extractClientIp(request);
+        String ua = request.getHeader("User-Agent");
+        return new ClientInfo(ip, ua);
+    }
+
+    /**
+     * 提取客户端 IP 地址。
+     * <p>
+     * 优先使用代理头：`X-Forwarded-For`（取第一个）、`X-Real-IP`；否则回退到 `request.getRemoteAddr()`。
+     *
+     * @param request HTTP 请求对象。
+     * @return 客户端 IP。
+     */
+    private String extractClientIp(HttpServletRequest request) {
+        String forwarded = request.getHeader("X-Forwarded-For");
+        if (forwarded != null && !forwarded.isBlank()) {
+            return forwarded.split(",")[0].trim();
+        }
+        String realIp = request.getHeader("X-Real-IP");
+        if (realIp != null && !realIp.isBlank()) {
+            return realIp.trim();
+        }
+        return request.getRemoteAddr();
+    }
+
+
+    /**
+     * 登录并获取令牌对。
+     * <p>
+     * 支持两种通道：密码登录或验证码登录；成功后签发 Access/Refresh Token。
+     *
+     * @param request     请求体，包含：标识类型与值、密码或验证码（二选一）。
+     * @param httpRequest 用于解析客户端信息（IP 与 User-Agent），记录审计日志。
+     * @return 认证响应，包含用户信息与令牌对。
+     */
+    @PostMapping("/login")
+    public AuthResponse login(@Valid @RequestBody LoginRequest request, HttpServletRequest httpRequest) {
+        return authService.login(request, resolveClient(httpRequest));
+    }
+
+
 
 }
