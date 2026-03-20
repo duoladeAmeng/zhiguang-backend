@@ -36,7 +36,7 @@ public class AuthProperties {
         private String issuer = "zhiguang";
         /** 访问令牌有效期（TTL）。 */
         private Duration accessTokenTtl = Duration.ofMinutes(15);
-        /** 刷新令牌有效期（TTL）。 */
+        /** 刷新令牌有效期（TTL）。7天 */
         private Duration refreshTokenTtl = Duration.ofDays(7);
         /** JWK 密钥标识（kid），用于下游校验与轮换。 */
         private String keyId = "zhiguang-key";

@@ -64,43 +64,83 @@ public class RedisVerificationCodeStore implements VerificationCodeStore{
     }
 
 
-    /**
+        /**
      * 校验验证码是否匹配，更新尝试计数并在成功时删除记录。
+     * <p>
+     * 校验流程如下：
+     * <ol>
+     *     <li>构建 Redis Key 并获取 Hash 结构中的完整数据</li>
+     *     <li>检查记录是否存在：不存在返回 NOT_FOUND</li>
+     *     <li>检查尝试次数是否已达上限：达到返回 TOO_MANY_ATTEMPTS</li>
+     *     <li>验证码比对：
+     *         <ul>
+     *             <li>匹配：删除记录并返回 SUCCESS</li>
+     *             <li>不匹配：递增尝试次数，判断是否触发上限</li>
+     *         </ul>
+     *     </li>
+     *     <li>尝试次数达上限时：延长 TTL 至 30 分钟并返回 TOO_MANY_ATTEMPTS</li>
+     *     <li>否则返回 MISMATCH 及当前尝试信息</li>
+     * </ol>
      *
-     * @param scene      场景名称。
-     * @param identifier 标识（手机号或邮箱）。
-     * @param code       用户输入的验证码。
-     * @return 校验结果（成功、未找到、错误、尝试过多）。
+     * @param scene      场景名称，用于区分业务用途（如 LOGIN、REGISTER、RESET_PASSWORD）。
+     * @param identifier 标识（手机号或邮箱），已标准化格式（手机号去空格、邮箱转小写）。
+     * @param code       用户输入的验证码字符串。
+     * @return 校验结果对象，包含：
+     *         - status: 验证码状态（SUCCESS/NOT_FOUND/MISMATCH/TOO_MANY_ATTEMPTS）
+     *         - attempts: 当前已尝试次数
+     *         - maxAttempts: 最大允许尝试次数
+     * @implNote Redis Hash 结构说明：
+     *         - code: 存储的验证码值
+     *         - maxAttempts: 最大尝试次数限制
+     *         - attempts: 当前已尝试次数
      */
     @Override
     public VerificationCheckResult verify(String scene, String identifier, String code) {
+        // 1. 构建 Redis Key：格式为 "auth:code:{scene}:{identifier}"
         String key = buildKey(scene, identifier);
+        // 2. 获取 Redis Hash 操作对象
         HashOperations<String, String, String> ops = redisTemplate.opsForHash();
+        // 3. 读取 Hash 中的所有字段（code、maxAttempts、attempts）
         Map<String, String> data = ops.entries(key);
+        // 4. 记录不存在：验证码已过期或被使用
         if (data.isEmpty()) {
             return new VerificationCheckResult(VerificationCodeStatus.NOT_FOUND, 0, 0);
         }
+        // 5. 提取存储的验证码和尝试次数配置
         String storedCode = data.get(FIELD_CODE);
-        int maxAttempts = parseInt(data.get(FIELD_MAX_ATTEMPTS), 5);
-        int attempts = parseInt(data.get(FIELD_ATTEMPTS), 0);
+        int maxAttempts = parseInt(data.get(FIELD_MAX_ATTEMPTS), 5);  // 默认 5 次
+        int attempts = parseInt(data.get(FIELD_ATTEMPTS), 0);          // 默认 0 次
 
+        // 6. 检查是否已超过最大尝试次数
         if (attempts >= maxAttempts) {
             return new VerificationCheckResult(VerificationCodeStatus.TOO_MANY_ATTEMPTS, attempts, maxAttempts);
         }
 
+        // 7. 验证码比对
         if (Objects.equals(storedCode, code)) {
+            // 7.1 匹配成功：立即删除记录，防止重复使用
             redisTemplate.delete(key);
             return new VerificationCheckResult(VerificationCodeStatus.SUCCESS, attempts, maxAttempts);
         }
 
+        // 8. 匹配失败：递增尝试次数并更新 Redis
         int updatedAttempts = attempts + 1;
         ops.put(key, FIELD_ATTEMPTS, String.valueOf(updatedAttempts));
+
+        // 9. 检查是否触发最大尝试次数限制
         if (updatedAttempts >= maxAttempts) {
+            // 9.1 达到上限：延长 TTL 至 30 分钟（防止暴力破解）
             redisTemplate.expire(key, Duration.ofMinutes(30));
             return new VerificationCheckResult(VerificationCodeStatus.TOO_MANY_ATTEMPTS, updatedAttempts, maxAttempts);
         }
+
+        // 10. 返回不匹配状态及当前尝试信息
         return new VerificationCheckResult(VerificationCodeStatus.MISMATCH, updatedAttempts, maxAttempts);
     }
+
+
+
+
     /**
      * 解析整数字符串，失败返回默认值。
      *

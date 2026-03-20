@@ -1,16 +1,17 @@
 package com.dyc.auth.api;
 
 import com.dyc.auth.config.AuthProperties;
-import com.dyc.auth.dto.AuthResponse;
-import com.dyc.auth.dto.RegisterRequest;
-import com.dyc.auth.dto.SendCodeRequest;
-import com.dyc.auth.dto.SendCodeResponse;
+import com.dyc.auth.dto.*;
 import com.dyc.auth.model.ClientInfo;
 import com.dyc.auth.service.AuthService;
+import com.dyc.auth.token.JwtService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -19,7 +20,7 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final AuthService authService;
-    private final AuthProperties authProperties;
+    private final JwtService jwtService;
 
 
     /**
@@ -99,6 +100,48 @@ public class AuthController {
         return authService.login(request, resolveClient(httpRequest));
     }
 
+    /**
+     * 使用验证码重置密码。
+     * <p>
+     * 验证标识与验证码后更新用户密码哈希，并撤销该用户所有刷新令牌以强制下线。
+     *
+     * @param request 请求体，包含：标识类型与值、验证码、新密码。
+     * @return 空响应，HTTP 204 No Content。
+     */
+    @PostMapping("/password/reset")
+    public ResponseEntity<Void> resetPassword(@Valid @RequestBody PasswordResetRequest request) {
+        authService.resetPassword(request);
+        return ResponseEntity.noContent().build();
+    }
+
+
+    /**
+     * 查询当前登录用户信息。
+     * <p>
+     * 基于 Spring Security 注入的 `Jwt` 令牌，提取用户 ID 并返回用户概要信息。
+     *
+     * @param jwt 当前请求绑定的 JWT 令牌（来自 `Authorization: Bearer`）。
+     * @return 用户信息响应。
+     */
+    @GetMapping("/me")
+    public AuthUserResponse me(@AuthenticationPrincipal Jwt jwt) {
+        long userId = jwtService.extractUserId(jwt);
+        return authService.me(userId);
+    }
+
+
+    /**
+     * 使用 Refresh Token 刷新令牌。
+     * <p>
+     * 校验刷新令牌的合法性与白名单状态，签发新的令牌对，并撤销旧刷新令牌。
+     *
+     * @param request 请求体，包含：refreshToken（刷新令牌）。
+     * @return 新的令牌响应（accessToken/refreshToken 及其过期时间）。
+     */
+    @PostMapping("/token/refresh")
+    public TokenResponse refresh(@Valid @RequestBody TokenRefreshRequest request) {
+        return authService.refresh(request);
+    }
 
 
 }
