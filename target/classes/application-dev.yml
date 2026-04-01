@@ -50,3 +50,11 @@ spring:
       api-key: 256b1fde5db742d4b2a5c19694fea3bf.Kiz7OM99lUC0UdP1
 mybatis:
   mapper-locations: classpath:mapper/*.xml
+
+oss:
+  endpoint: oss-cn-beijing.aliyuncs.com
+  access-key-id: LTAI5t5ozqJeAZN1AcDVZEdx
+  access-key-secret: Rkr33Wke0noKIX46ReIWIh9rtjDOso
+  bucket: dyc-zhiguang
+  public-domain: ${OSS_PUBLIC_DOMAIN:}
+  folder: dev/avatars
