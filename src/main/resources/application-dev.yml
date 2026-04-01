@@ -58,3 +58,4 @@ oss:
   bucket: dyc-zhiguang
   public-domain: ${OSS_PUBLIC_DOMAIN:}
   folder: dev/avatars
+
