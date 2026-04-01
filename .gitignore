@@ -1,0 +1,40 @@
+# Maven 构建输出目录
+target/
+
+# 配置文件（排除示例文件）
+!*.example
+!application.example.yml
+!application-dev.example.yml
+application.yml
+application-dev.yml
+application-prod.yml
+application-test.yml
+*.properties
+
+# IDE 相关文件
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+.settings/
+.project
+.classpath
+.factorypath
+
+# 编译输出
+*.class
+
+# 日志文件
+*.log
+logs/
+
+# 临时文件
+*.tmp
+*.bak
+*.swp
+*~.nib
+local.properties
+
+# Mac 系统文件
+.DS_Store

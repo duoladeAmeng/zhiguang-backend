@@ -53,8 +53,6 @@ mybatis:
 
 oss:
   endpoint: oss-cn-beijing.aliyuncs.com
-  access-key-id: LTAI5t5ozqJeAZN1AcDVZEdx
-  access-key-secret: Rkr33Wke0noKIX46ReIWIh9rtjDOso
   bucket: dyc-zhiguang
   public-domain: ${OSS_PUBLIC_DOMAIN:}
   folder: dev/avatars
